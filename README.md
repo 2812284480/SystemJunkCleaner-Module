@@ -1,6 +1,6 @@
 # System Junk Cleaner 🍋
 
-白名单式系统垃圾清理器 —— APatch模块
+白名单式系统垃圾清理器 —— APatch / Magisk 模块
 **极速 · Web 管理 · 定时清理 · 日志诊断 · 开源公益**
 
 > 本模块由 AI 辅助开发（核心脚本、Web 前端与算法均由 AI 编写，经人工测试验证后开源）。
@@ -19,7 +19,7 @@
 ## 📥 安装
 
 1. 下载 `SystemJunkCleaner-v2-a9.zip`
-2. 在 **APatch** 中刷入该 zip
+2. 在 **APatch / Magisk** 中刷入该 zip
 3. 重启后自动生效（Web 界面开机自启）
 
 > 升级：直接刷入新版 zip 覆盖即可，历史统计保留。
@@ -73,12 +73,13 @@ NOTIFY=1                # 清理完成通知 (1=开 0=关)
 
 ## 🔧 兼容性
 - 测试设备：OPPO PKR110 · Android 16 (SDK 36) · APatch
-- 原理上兼容各 Android 版本（Android 16+ 通知需 su 2000）
-- 依赖：`nsenter`、`busybox httpd`
+- 原理上兼容 Magisk 与各 Android 版本（Android 16+ 通知需 su 2000）
+- 依赖：`nsenter`、`busybox httpd`（APatch 自带）
 
 ## 📜 许可
 本项目以 MIT 许可开源发布，欢迎大家自由使用、修改、二次分发。
 详见 `LICENSE` 文件。
+版本迭代详见 `CHANGELOG.md`。
 
 ## 💖 公益声明
 本模块完全免费、无广告、无联网、无追踪。愿每一个安卓设备都能"清新如初"。
@@ -86,5 +87,3 @@ NOTIFY=1                # 清理完成通知 (1=开 0=关)
 ## 🤖 关于 AI 协作
 本模块的代码由 AI 编写，并遵循开源许可公开。欢迎任何人审阅、修改、二次开发。
 如果你改进了它，欢迎把改进贡献回来，让更多设备受益。
-
-企鹅群:429260149
