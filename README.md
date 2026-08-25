@@ -73,8 +73,8 @@ NOTIFY=1                # 清理完成通知 (1=开 0=关)
 
 ## 🔧 兼容性
 - 测试设备：OPPO PKR110 · Android 16 (SDK 36) · APatch
-- 原理上兼容 Magisk 与各 Android 版本（Android 16+ 通知需 su 2000）
-- 依赖：`nsenter`、`busybox httpd`（APatch 自带）
+- 原理上兼容各 Android 版本（Android 16+ 通知需 su 2000）
+- 依赖：`nsenter`、`busybox httpd`
 
 ## 📜 许可
 本项目以 MIT 许可开源发布，欢迎大家自由使用、修改、二次分发。
