@@ -1,5 +1,7 @@
 # System Junk Cleaner 🍋
 
+**🌐 语言 / Language**: [**English**](./README_EN.md) | 中文
+
 白名单式系统垃圾清理器 —— APatch / Magisk 模块
 **极速 · Web 管理 · 定时清理 · 日志诊断 · 开源公益**
 

@@ -1,5 +1,7 @@
 # System Junk Cleaner 🍋
 
+**Language / 语言**: English | [**中文**](./README.md)
+
 A whitelist-based Android junk cleaner module for **APatch / Magisk**.
 **Fast · Web management · Scheduled cleaning · Log diagnostics · Open source (MIT)**
 
