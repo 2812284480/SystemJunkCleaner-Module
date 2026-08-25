@@ -71,3 +71,5 @@ MIT License. Free to use, modify, and redistribute. See `LICENSE`.
 
 ## About AI
 This module's code was written by AI and published under an open-source license. Everyone is welcome to review, modify, and improve it. Contributions are appreciated.
+
+QQ group:429260149
