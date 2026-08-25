@@ -19,7 +19,7 @@
 ## 📥 安装
 
 1. 下载 `SystemJunkCleaner-v2-a9.zip`
-2. 在 **APatch / Magisk** 中刷入该 zip
+2. 在 **APatch** 中刷入该 zip
 3. 重启后自动生效（Web 界面开机自启）
 
 > 升级：直接刷入新版 zip 覆盖即可，历史统计保留。
