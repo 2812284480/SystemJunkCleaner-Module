@@ -20,7 +20,7 @@ A whitelist-based Android junk cleaner module for **APatch / Magisk**.
 
 ## Install
 
-1. Download `SystemJunkCleaner-v2-a9.zip`
+1. Download `SystemJunkCleaner-vx-ax.zip`
 2. Flash it in **APatch / Magisk**
 3. Reboot; the web UI auto-starts
 
