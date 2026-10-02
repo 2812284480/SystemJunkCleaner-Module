@@ -103,7 +103,7 @@ function swish(){try{var a=ac();if(!a)return;var o=a.createOscillator(),g=a.crea
 /* 星光系统 */
 (function(){
   var W=window.innerWidth,H=window.innerHeight,container=document.getElementById("stars");
-  var starData=[],escaping=false,clearTimer=null,rafId=null,count=40,starEnabled=true;
+  var starData=[],escaping=false,clearTimer=null,rafId=null,count=28,starEnabled=true;
   var BASE_COLORS=["#e0e7ff","#c7d2fe","#a5b4fc","#f0abfc","#ffffff"];
   var MODE_COLORS={1:"#f59e0b",0:"#f43f5e"},TAB_COLORS={clean:"#f43f5e",stats:"#3b82f6",whitelist:"#8b5cf6",config:"#10b981",log:"#06b6d4"};
   var modeColor=null,tabColor="clean";
@@ -111,9 +111,9 @@ function swish(){try{var a=ac();if(!a)return;var o=a.createOscillator(),g=a.crea
   function makeStar(x,y,role){
     var s=document.createElement("div");s.className="star";
     var bc=BASE_COLORS[Math.floor(Math.random()*BASE_COLORS.length)],r=2+Math.random()*3.5;
-    s.style.width=r+"px";s.style.height=r+"px";container.appendChild(s);
+    s.style.width=r+"px";s.style.height=r+"px";s.style.left="0";s.style.top="0";container.appendChild(s);
     var d={x:x||Math.random()*W,y:y||Math.random()*H,dx:(Math.random()-0.5)*0.5,dy:(Math.random()-0.5)*0.4-0.08,el:s,alive:true,role:role,baseColor:bc,color:bc};
-    s.style.color=bc;s.style.left=d.x+"px";s.style.top=d.y+"px";s.style.opacity=0.4+Math.random()*0.5;
+    s.style.color=bc;s.style.transform="translate("+d.x+"px,"+d.y+"px)";s.style.opacity=0.4+Math.random()*0.5;
     starData.push(d);return d;
   }
   for(var i=0;i<count;i++)makeStar(null,null,pickRole(i));
@@ -150,7 +150,7 @@ function swish(){try{var a=ac();if(!a)return;var o=a.createOscillator(),g=a.crea
       var d=starData[idx++];d.x=Math.random()*W;d.y=Math.random()*H;
       d.dx=(Math.random()-0.5)*0.5;d.dy=(Math.random()-0.5)*0.4-0.08;d.alive=true;
       var t=0.4+Math.random()*0.5;
-      d.el.style.opacity="0";d.el.style.left=d.x+"px";d.el.style.top=d.y+"px";
+      d.el.style.opacity="0";d.el.style.transform="translate("+d.x+"px,"+d.y+"px)";
       void d.el.offsetWidth;d.el.style.opacity=t;
       clearTimer=setTimeout(appear,50);
     }
@@ -160,18 +160,22 @@ function swish(){try{var a=ac();if(!a)return;var o=a.createOscillator(),g=a.crea
     escaping=false;
     if(window._starWaitTimer){clearInterval(window._starWaitTimer);window._starWaitTimer=null;}
     if(clearTimer)clearTimeout(clearTimer);
-    starData.forEach(function(d){d.alive=true;d.x=Math.random()*W;d.y=Math.random()*H;d.dx=(Math.random()-0.5)*0.5;d.dy=(Math.random()-0.5)*0.4-0.08;d.el.style.left=d.x+"px";d.el.style.top=d.y+"px";d.el.style.opacity=0.4+Math.random()*0.5;});
+    starData.forEach(function(d){d.alive=true;d.x=Math.random()*W;d.y=Math.random()*H;d.dx=(Math.random()-0.5)*0.5;d.dy=(Math.random()-0.5)*0.4-0.08;d.el.style.transform="translate("+d.x+"px,"+d.y+"px)";d.el.style.opacity=0.4+Math.random()*0.5;});
   }
-  function driftStars(){
-    for(var i=0;i<starData.length;i++){
-      var d=starData[i];if(!d.alive)continue;
-      if(escaping){
-        d.x+=d.dx;d.y+=d.dy;d.el.style.left=d.x+"px";d.el.style.top=d.y+"px";
-        if(d.x<-120||d.x>W+120||d.y<-120||d.y>H+120){d.alive=false;d.el.style.opacity="0";}
-      }else{
-        d.x+=d.dx;d.y+=d.dy;
-        if(d.x<0||d.x>W)d.dx*=-1;if(d.y<0||d.y>H)d.dy*=-1;
-        d.el.style.left=d.x+"px";d.el.style.top=d.y+"px";
+  var starLastT=0;
+  function driftStars(now){
+    if((now||0)-starLastT>=33){
+      starLastT=now||0;
+      for(var i=0;i<starData.length;i++){
+        var d=starData[i];if(!d.alive)continue;
+        if(escaping){
+          d.x+=d.dx*2;d.y+=d.dy*2;d.el.style.transform="translate("+d.x+"px,"+d.y+"px)";
+          if(d.x<-120||d.x>W+120||d.y<-120||d.y>H+120){d.alive=false;d.el.style.opacity="0";}
+        }else{
+          d.x+=d.dx*2;d.y+=d.dy*2;
+          if(d.x<0||d.x>W)d.dx*=-1;if(d.y<0||d.y>H)d.dy*=-1;
+          d.el.style.transform="translate("+d.x+"px,"+d.y+"px)";
+        }
       }
     }
     rafId=requestAnimationFrame(driftStars);
@@ -199,7 +203,8 @@ document.querySelectorAll(".tab").forEach(function(t){t.addEventListener("click"
   document.querySelectorAll(".page").forEach(function(x){x.classList.remove("on")});
   t.classList.add("active");document.getElementById("p-"+t.dataset.p).classList.add("on");
   if(window.__starApplyTab)__starApplyTab(t.dataset.p);
-  if(t.dataset.p==="stats"){if(typeof loadChart==="function")loadChart();}
+  if(t.dataset.p==="stats"){if(typeof loadChart==="function")loadChart();if(window.__waterResume)window.__waterResume();}
+  else{if(window.__waterPause)window.__waterPause();}
 
 })});
 function setGoText(t){
@@ -847,9 +852,10 @@ function backPerf(){
   var dpr=window.devicePixelRatio||1;
   c.width=104*dpr;c.height=104*dpr;c.style.width="104px";c.style.height="104px";
   var ctx=c.getContext("2d");ctx.scale(dpr,dpr);
-  var w=104,h=104;
+  var w=104,h=104,wf=0,wRaf=null;
   function wy(x,base,tt){return base+Math.sin((x+tt)*0.065)*2.8+Math.sin((x*1.5+tt*0.55)*0.09)*1.4;}
   function draw(){
+    wf++;if(wf%2!==0){wRaf=requestAnimationFrame(draw);return;}
     var pct=window.__waterPct||0,waterH=pct/100*h,base=h-waterH;
     ctx.clearRect(0,0,w,h);
     if(pct>0){
@@ -872,16 +878,18 @@ function backPerf(){
       for(var x=0;x<=w;x+=1)ctx.lineTo(x,wy(x,base,t));
       ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.5;ctx.stroke();
     }
-    t+=0.35;requestAnimationFrame(draw);
+    t+=0.7;wRaf=requestAnimationFrame(draw);
   }
   draw();
+  window.__waterPause=function(){if(wRaf){cancelAnimationFrame(wRaf);wRaf=null;}};
+  window.__waterResume=function(){if(wRaf)return;draw();};
 })();
 
 /* 水缸超小水汽引擎 v114: 摇可乐开盖式, 高密度快浮速 */
 (function(){
   var tank=document.getElementById("waterTank");
   if(!tank)return;
-  var MAX=80,bubbles=[],running=false,H=104;
+  var MAX=40,bubbles=[],running=false,H=104;
   function spawn(){
     if(bubbles.length>=MAX||document.body.classList.contains("no-anim"))return;
     var b=document.createElement("span");
@@ -911,14 +919,14 @@ function backPerf(){
     }
     if(running)requestAnimationFrame(tick);
   }
-  for(var i=0;i<30;i++)setTimeout(spawn,i*15);
-  setInterval(spawn,35);
+  for(var i=0;i<12;i++)setTimeout(spawn,i*15);
+  setInterval(spawn,80);
   running=true;tick();
 })();
 
 /* 水汽粒子: 超大模糊淡白团, 极慢上浮 (v111) */
 (function(){
-  var vps=[],MAX=5,W=0,H=0;
+  var vps=[],MAX=3,W=0,H=0;
   function spawn(){
     if(vps.length>=MAX)return;
     W=window.innerWidth||400;H=window.innerHeight||800;
@@ -942,7 +950,7 @@ function backPerf(){
     requestAnimationFrame(tick);
   }
   for(var i=0;i<3;i++)setTimeout(function(){spawn();},i*1000);
-  setInterval(spawn,2500);
+  setInterval(spawn,4000);
   tick();
 })();
 /* 液态玻璃指针光源: 玻璃表面跟随指针的反射光点 (v2-a12) */
