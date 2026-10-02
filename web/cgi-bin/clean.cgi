@@ -66,8 +66,9 @@ if [ "$dry" = "1" ]; then
   else
     est_msg="试运行完成，预计可释放 ${freed_total:-0} KB"
   fi
+  est_esc=$(printf "%s" "$est_msg" | sed "s/'/'\\\\''/g")
   if command -v su >/dev/null 2>&1; then
-    su 2000 -c "cmd notification post -i @android:drawable/ic_menu_edit -t '🔍 试运行' sclean_clean '$est_msg'" >/dev/null 2>&1
+    su 2000 -c "cmd notification post -i @android:drawable/ic_menu_edit -t '🔍 试运行' sclean_clean '$est_esc'" >/dev/null 2>&1
   else
     cmd notification post -i @android:drawable/ic_menu_edit -t "🔍 试运行" sclean_clean "$est_msg" >/dev/null 2>&1
   fi

@@ -37,6 +37,10 @@ if [ "$mode" = "write" -o "$mode" = "restore" ]; then
     if grep -E '^MAX_FILE_KB=' "$TMP" | grep -qvE '^MAX_FILE_KB=[0-9]{1,8}$'; then valid=0; fi
     # 9) GAME_LIST 包名模式 (每行: 字母数字点下划线星号)
     if grep -E '^GAME_LIST=' "$TMP" | grep -qvE '^GAME_LIST=[A-Za-z0-9._*]+$'; then valid=0; fi
+    # 10) 路径类值 (EXCLUDE_DIR/ADD_DIR): 须以 / 开头, 仅字面路径字符(允通配*/空格), 禁 shell 元字符/引号
+    if grep -E '^(EXCLUDE_DIR|ADD_DIR)=' "$TMP" | grep -qvE '^(EXCLUDE_DIR|ADD_DIR)=[/][A-Za-z0-9._/* -]*$'; then valid=0; fi
+    # 11) 敏感值 (WEB_TOKEN/NOTIFY_TITLE): 禁引号/分号/反引号/空白注入
+    if grep -E '^(WEB_TOKEN|NOTIFY_TITLE)=' "$TMP" | grep -qvE '^(WEB_TOKEN|NOTIFY_TITLE)=[A-Za-z0-9._@!#$%^&*+=-]*$'; then valid=0; fi
     if [ "$valid" = "1" ]; then
       cp "$CONFIG" "$CONFIG.bak" 2>/dev/null
       mv -f "$TMP" "$CONFIG" 2>/dev/null

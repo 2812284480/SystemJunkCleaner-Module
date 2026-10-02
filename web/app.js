@@ -345,37 +345,90 @@ var WL_ITEMS=[
   {path:"/sdcard/.FileManagerRecycler",label:"文件管理器回收站",icon:"🗑️",group:"回收站"},
   {path:"/sdcard/.MediaTrash",label:"媒体回收站",icon:"🗑️",group:"回收站"}
 ];
+function wlValidatePath(p){
+  p=(p||"").trim();
+  if(!p)return "不能为空";
+  if(p.charAt(0)!=="/")return "路径须以 / 开头";
+  if(!/^\/[A-Za-z0-9._/*-]+$/.test(p))return "含非法字符";
+  var parts=p.replace(/\/+$/,"").split("/").filter(Boolean);
+  if(parts.length<=1&&["data","sdcard","storage","system","mnt","vendor","apex"].indexOf(parts[0])!==-1)return "太宽泛（一级目录），保护它会使清理失效";
+  if(p==="/")return "路径太宽泛";
+  return "";
+}
+function wlRenderItem(it,prot,isCustom){
+  var div=document.createElement("div");div.className="wl-item"+(prot?" on":"")+(isCustom?" custom":"");div.dataset.path=it.path;
+  var del=isCustom?'<button class="wl-del" title="移除" onclick="wlRemove(this)">×</button>':'';
+  div.innerHTML='<span class="wl-icon">'+(it.icon||"🗂️")+'</span><span class="wl-text"><span class="wl-label">'+esc(it.label||it.path)+'</span><code>'+esc(it.path)+'</code></span>'+del+'<label class="wl-switch"><input type="checkbox" '+(prot?"checked":"")+' onchange="wlChange(this)" data-path="'+esc(it.path)+'"><span class="wl-slider"></span></label>';
+  return div;
+}
+function wlRenderGroup(list,g,items,exSet,isCustom){
+  var gd=document.createElement("div");gd.className="wl-group";gd.dataset.g=(isCustom?"custom":g);
+  gd.innerHTML='<span class="wl-g-head" onclick="wlToggleGroup(this)"><span class="wl-g-arrow">▾</span>'+g+'</span><span class="wl-g-count">'+items.length+' 项</span>';
+  var body=document.createElement("div");body.className="wl-group-body";
+  items.forEach(function(it){ body.appendChild(wlRenderItem(it,isCustom?true:(exSet[it.path]===1),isCustom)); });
+  gd.appendChild(body);list.appendChild(gd);
+}
+function wlUpdateSummary(){
+  var total=document.querySelectorAll("#wlList .wl-item").length,on=document.querySelectorAll("#wlList .wl-item input:checked").length;
+  var el=document.getElementById("wlSummary");if(el)el.textContent="已保护 "+on+" / 共 "+total;
+}
 async function loadWhitelist(){
   var list=document.getElementById("wlList");list.innerHTML="";
   var excluded=[];
-  try{
-    var r=await getCfg();
-    (r.lines||[]).forEach(function(line){
-      if(line.indexOf("EXCLUDE_DIR=")===0){var p=line.substring(12).trim();if(p)excluded.push(p);}
-    });
-  }catch(e){}
+  try{var r=await getCfg();(r.lines||[]).forEach(function(line){if(line.indexOf("EXCLUDE_DIR=")===0){var p=line.substring(12).trim();if(p)excluded.push(p);}});}catch(e){}
+  var exSet={};excluded.forEach(function(p){exSet[p]=1;});
+  var presetSet={};WL_ITEMS.forEach(function(it){presetSet[it.path]=1;});
   var groups={};
-  WL_ITEMS.forEach(function(it){ (groups[it.group]=groups[it.group]||[]).push(it); });
-  Object.keys(groups).forEach(function(g){
-    var gd=document.createElement("div");gd.className="wl-group";
-    gd.innerHTML="<span>"+g+"</span><span class=\"wl-g-count\">"+groups[g].length+" 项</span>";
-    list.appendChild(gd);
-    groups[g].forEach(function(item){
-      var prot=excluded.indexOf(item.path)!==-1;
-      var div=document.createElement("div");div.className="wl-item"+(prot?" on":"");
-      div.innerHTML="<span class=\"wl-icon\">"+(item.icon||"🗂️")+"</span><span class=\"wl-text\"><span class=\"wl-label\">"+esc(item.label)+"</span><code>"+esc(item.path)+"</code></span><label class=\"wl-switch\"><input type=\"checkbox\" "+(prot?"checked":"")+" onchange=\"wlChange(this)\" data-path=\""+esc(item.path)+"\"><span class=\"wl-slider\"></span></label>";
-      list.appendChild(div);
-    });
+  WL_ITEMS.forEach(function(it){(groups[it.group]=groups[it.group]||[]).push(it);});
+  Object.keys(groups).forEach(function(g){wlRenderGroup(list,g,groups[g],exSet,false);});
+  var customs=[];excluded.forEach(function(p){if(!presetSet[p])customs.push({path:p,label:p,icon:"🔧"});});
+  if(customs.length)wlRenderGroup(list,"自定义",customs,exSet,true);
+  var s=document.getElementById("wlSearch");if(s)s.value="";
+  wlUpdateSummary();
+}
+function wlToggleGroup(h){h.closest(".wl-group").classList.toggle("collapsed");}
+function wlFilter(){
+  var q=((document.getElementById("wlSearch").value||"").toLowerCase());
+  document.querySelectorAll("#wlList .wl-item").forEach(function(it){
+    var txt=((it.dataset.path||"")+" "+(it.querySelector(".wl-label")?it.querySelector(".wl-label").textContent:"")).toLowerCase();
+    it.style.display=(!q||txt.indexOf(q)!==-1)?"":"none";
   });
+  document.querySelectorAll("#wlList .wl-group").forEach(function(g){
+    var vis=0;g.querySelectorAll(".wl-item").forEach(function(it){if(it.style.display!=="none")vis++;});
+    g.style.display=(q&&vis===0)?"none":"";
+  });
+}
+function wlAdd(){
+  var inp=document.getElementById("wlAdd"),p=(inp.value||"").trim();if(!p)return;
+  var m=document.getElementById("wlMsg"),err=wlValidatePath(p);
+  if(err){if(m){m.textContent="✗ "+err;m.style.color="var(--err)";}inp.focus();return;}
+  var list=document.getElementById("wlList");
+  if(list.querySelector('.wl-item[data-path="'+p+'"]')){if(m){m.textContent="⚠️ 该路径已在白名单";m.style.color="var(--warn)";}return;}
+  var cg=list.querySelector(".wl-group[data-g='custom']");
+  if(!cg){cg=document.createElement("div");cg.className="wl-group";cg.dataset.g="custom";cg.innerHTML='<span class="wl-g-head" onclick="wlToggleGroup(this)"><span class="wl-g-arrow">▾</span>自定义</span><span class="wl-g-count">0 项</span>';var b=document.createElement("div");b.className="wl-group-body";cg.appendChild(b);list.appendChild(cg);}
+  cg.querySelector(".wl-group-body").appendChild(wlRenderItem({path:p,label:p,icon:"🔧"},true,true));
+  cg.querySelector(".wl-g-count").textContent=cg.querySelectorAll(".wl-item").length+" 项";
+  inp.value="";
+  if(m){m.textContent="⚠️ 已添加，点击保存生效";m.style.color="var(--warn)";}
+  wlUpdateSummary();
+}
+function wlRemove(btn){
+  var it=btn.closest(".wl-item");if(!it)return;it.parentNode.removeChild(it);
+  var g=it.closest(".wl-group");
+  if(g){var n=g.querySelectorAll(".wl-item").length,c=g.querySelector(".wl-g-count");if(c)c.textContent=n+" 项";if(n===0)g.style.display="none";}
+  var m=document.getElementById("wlMsg");if(m){m.textContent="⚠️ 已移除，点击保存生效";m.style.color="var(--warn)";}
+  wlUpdateSummary();
 }
 function wlChange(cb){
   var it=cb.closest(".wl-item");if(it)it.classList.toggle("on",cb.checked);
-  document.getElementById("wlMsg").textContent="⚠️ 已修改，点击保存生效";
+  wlUpdateSummary();
+  var m=document.getElementById("wlMsg");if(m){m.textContent="⚠️ 已修改，点击保存生效";m.style.color="var(--warn)";}
 }
 function wlAll(on){
-  document.querySelectorAll("#wlList input[type=checkbox]").forEach(function(cb){cb.checked=!!on;});
-  document.querySelectorAll("#wlList .wl-item").forEach(function(el){var c=el.querySelector("input");if(c)el.classList.toggle("on",c.checked);});
-  document.getElementById("wlMsg").textContent="⚠️ 已修改，点击保存生效";
+  document.querySelectorAll("#wlList .wl-item:not(.custom) input").forEach(function(cb){cb.checked=!!on;});
+  document.querySelectorAll("#wlList .wl-item:not(.custom)").forEach(function(el){var c=el.querySelector("input");if(c)el.classList.toggle("on",c.checked);});
+  wlUpdateSummary();
+  var m=document.getElementById("wlMsg");if(m){m.textContent="⚠️ 已修改，点击保存生效";m.style.color="var(--warn)";}
 }
 async function saveWhitelist(){
   var prot=[];
@@ -530,7 +583,7 @@ async function loadLog(){
     if(w)w.textContent=(d2.warns||0);if(e)e.textContent=(d2.errors||0);
   }catch(e2){}
 }
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function fmtKB(k){k=Number(k)||0;if(k>=1048576)return(k/1048576).toFixed(1)+"G";if(k>=1024)return(k/1024).toFixed(1)+"M";return k+"K";}
 function relTime(ts){if(!ts)return"";var d=(Date.now()-ts)/1000;if(d<60)return"刚刚";if(d<3600)return Math.floor(d/60)+"分钟前";if(d<86400)return Math.floor(d/3600)+"小时前";return Math.floor(d/86400)+"天前";}
 function logSummary(c){
