@@ -13,6 +13,9 @@
 - 🌐 **Web 管理界面**：本地 `http://127.0.0.1:8899`，无需 App
 - ⏰ **定时清理**：每日定点（CLEAN_TIME）或间隔（CLEAN_HOURS）
 - 🔒 **白名单保护**：EXCLUDE_DIR 排除目录，`.auth_cache`（微信等）永不清除
+- 📦 **资源保护**：files/public（微信等资源包）、liteapp（小程序）、磁盘图片缓存、编译缓存等删后需重新下载的目录**默认不清理**（RES_PROTECT=1）
+- 🎮 **游戏保护**：按包名精准保护游戏（7 大厂预置 + GAME_LIST 自定义），游戏缓存 / ShaderCache / obb 等资源不受影响；非游戏应用缓存正常清理（GAME_PROTECT=1）
+- 📏 **大文件保护**：超过 10MB 的文件不被删除，防止误删资源文件（MAX_FILE_KB=10240）
 - 🔍 **深度扫描**：应用缓存 / WebView / 腾讯系 / 日志 / 回收站全覆盖
 - 📊 **统计与日志**：清理历史图表 + 结构化日志（过滤/高亮/导出）
 - 🛡 **安全**：is_unsafe 危险路径拦截 + ADD_DIR 严格校验 + 原子锁
@@ -20,9 +23,9 @@
 
 ## 📥 安装
 
-1. 下载 `SystemJunkCleaner-vx-xx.zip`
-3. 在 **APatch / Magisk** 中刷入该 zip
-4. 重启后自动生效（Web 界面开机自启）
+1. 下载 `SystemJunkCleaner-v2-a14.zip`
+2. 在 **APatch / Magisk** 中刷入该 zip
+3. 重启后自动生效（Web 界面开机自启）
 
 > 升级：直接刷入新版 zip 覆盖即可，历史统计保留。
 
@@ -37,9 +40,11 @@ sclean            # 立即清理
 sclean --scan     # 预估可释放
 sclean --test     # 试运行（不删除）
 sclean --log      # 查看日志
-sclean --log-stats# 日志统计
+sclean --log-stats # 日志统计
 sclean --mem      # 内存占用
 sclean --config   # 查看配置
+sclean --schedule # 定时设置
+sclean --web      # Web 地址
 sclean --restart  # 重启定时守护
 sclean --fix      # 修复 Web 服务
 ```
@@ -49,8 +54,14 @@ sclean --fix      # 修复 Web 服务
 CLEAN_TIME=00:00        # 每日定时清理时间 (HH:MM)，留空则用间隔
 CLEAN_HOURS=24          # 清理间隔（小时）
 EXCLUDE_DIR=/路径       # 排除目录（可多行，保护不清理）
-ADD_DIR=/sdcard/路径    # 额外清理目录（仅限 /sdcard 非 Android 区域）
+ADD_DIR=/sdcard/路径    # 额外清理目录（仅限 /sdcard 非 Android 区域；不支持 Download/DCIM/Pictures 根目录，含空格路径需避免）
 NOTIFY=1                # 清理完成通知 (1=开 0=关)
+NOTIFY_TITLE=           # 自定义通知标题（留空=默认）
+WEB_TOKEN=              # Web 界面写操作鉴权令牌（留空=不鉴权）
+RES_PROTECT=1           # 资源保护 (1=开[默认]: 不清理删后需重新下载的资源缓存; 0=关: 允许清理)
+GAME_PROTECT=1          # 游戏保护 (1=开[默认]: 不清理游戏应用 cache + 游戏资源目录; 0=关: 恢复清理)
+MAX_FILE_KB=10240       # 大文件保护 (KB, 默认10240=10MB; 超过此大小的文件不删除, 防误删资源; 0=不限)
+GAME_LIST=com.your.game # 自定义游戏名单 (可多行, 每行一个包名, 追加到预置保护; 通配符 * 可用)
 ```
 
 ## 📋 日志与诊断
@@ -74,7 +85,7 @@ NOTIFY=1                # 清理完成通知 (1=开 0=关)
 ```
 
 ## 🔧 兼容性
-- 测试设备：OPPO PKR110 · Android 16 (SDK 36) · APatch
+- 测试设备：OnePlus PKR110 · Android 17 (SDK 37) · APatch
 - 原理上兼容 Magisk 与各 Android 版本（Android 16+ 通知需 su 2000）
 - 依赖：`nsenter`、`busybox httpd`（APatch 自带）
 

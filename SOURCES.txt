@@ -1,0 +1,55 @@
+System Junk Cleaner v2-a14 — 源码清单
+=====================================
+
+本文件列出模块全部源码文件，供 GitHub 等平台上传源码使用。
+
+核心脚本
+---------
+cleanup.sh          清理引擎（核心，约 440 行）
+service.sh          开机自启 + Web 服务 + 守护生成
+daily.sh            定时清理守护（由 service.sh 生成，也随包分发）
+action.sh           APatch 运行按钮入口
+uninstall.sh        卸载脚本
+system/bin/sclean   CLI 命令行工具
+
+配置文件
+---------
+module.prop         模块信息（id/name/version/author/description）
+config              默认配置
+
+Web 前端
+---------
+web/index.html      主页面（5 标签页 + 性能图）
+web/app.js          前端逻辑（音效/水效果/玻璃/日志详情）
+web/style.css       样式（含日志高亮/青柠动画）
+
+CGI 脚本（web/cgi-bin/）
+-----------------------
+status.cgi          状态接口（版本/存储/守护/Web）
+clean.cgi           清理执行 + 系统振动 + JSON 输出
+config.cgi          配置读写 + 备份恢复 + 写入校验
+history.cgi         清理历史（按日汇总）
+log.cgi             日志读取 + 过滤 + 统计
+diag.cgi            一键诊断导出（含守护日志/内存）
+
+文档
+-----
+README.md           中文使用说明
+README_EN.md        English readme
+FAQ.md              常见问题
+CHANGELOG.md        更新日志
+LICENSE             MIT 许可
+SOURCES.txt         本清单
+
+test/
+-----
+boundary_test.sh    边界测试套件（55 项）
+
+发布产物
+---------
+SystemJunkCleaner-v2-a14.zip  可刷入的模块包（APatch/Magisk）
+
+说明
+-----
+本模块由 AI 辅助开发（核心脚本、Web 前端与算法均由 AI 编写），
+经人工测试验证后以 MIT 许可开源发布。
