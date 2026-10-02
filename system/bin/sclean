@@ -1,0 +1,109 @@
+#!/system/bin/sh
+MODDIR=/data/adb/modules/system_junk_cleaner
+case "$1" in
+  --run)
+    # 启动 Web + 打开管理界面 (原 action.sh 逻辑内联, 单一维护点)
+    # 自动检测 busybox (兼容 APatch/Magisk/系统)
+    BUSYBOX=""
+    for b in /data/adb/ap/bin/busybox /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox; do
+      [ -x "$b" ] && { BUSYBOX="$b"; break; }
+    done
+    [ -z "$BUSYBOX" ] && BUSYBOX=$(command -v busybox 2>/dev/null)
+    PORT=8899
+    URL="http://127.0.0.1:$PORT"
+    chmod 755 "$MODDIR"/*.sh "$MODDIR"/system/bin/* "$MODDIR"/web/cgi-bin/*.cgi 2>/dev/null
+    if ! (ss -ltn 2>/dev/null | grep -q ":$PORT" || netstat -ltn 2>/dev/null | grep -q ":$PORT"); then
+      for p in /proc/[0-9]*; do
+        [ "${p#/proc/}" = "$$" ] && continue
+        [ "${p#/proc/}" = "$PPID" ] && continue
+        case "${p#/proc/}" in *[!0-9]*) continue;; esac
+        cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)
+        case "$cmd" in *"httpd -p 127.0.0.1:$PORT"*) kill -9 "${p#/proc/}" 2>/dev/null;; esac
+      done
+      "$BUSYBOX" httpd -p 127.0.0.1:$PORT -h "$MODDIR/web" >/dev/null 2>&1 &
+      sleep 1
+    fi
+    # 确保定时守护运行 (v2-a11)
+    dp=$(cat "$MODDIR/.daemon_pid" 2>/dev/null || echo 0)
+    case "$dp" in *[!0-9]*) dp=0;; esac
+    if [ "$dp" -le 0 ] || [ ! -d "/proc/$dp" ]; then
+      nohup sh "$MODDIR/daily.sh" >/dev/null 2>&1 &
+    fi
+    res=$(cmd package resolve-activity -a android.intent.action.VIEW -d "http://" 2>/dev/null | grep "name=" | head -1 | sed "s/.*name=//")
+    if [ -n "$res" ] && ! echo "$res" | grep -qi "ResolverActivity"; then
+      am start -a android.intent.action.VIEW -d "$URL" >/dev/null 2>&1 && echo "🌐 已打开: $URL ($res)" && exit 0
+    fi
+    if pm path mark.via >/dev/null 2>&1; then
+      am start -a android.intent.action.VIEW -d "$URL" -n mark.via/.Shell --activity-clear-task >/dev/null 2>&1 && echo "🌐 已打开: $URL (Via)" && exit 0
+    fi
+    if pm path com.UCMobile >/dev/null 2>&1; then
+      am start -a android.intent.action.VIEW -d "$URL" -n com.UCMobile/com.uc.browser.InnerUCMobile >/dev/null 2>&1 && echo "🌐 已打开: $URL (UC)" && exit 0
+    fi
+    am start -a android.intent.action.VIEW -d "$URL" >/dev/null 2>&1 && echo "🌐 已打开: $URL" && exit 0
+    echo "❌ 打开失败: 未找到可用浏览器"
+    ;;
+  --scan) echo "🔍 预估可释放..."; sh "$MODDIR/cleanup.sh" --scan;;
+  --test) echo "🔍 试运行..."; sh "$MODDIR/cleanup.sh" --test;;
+  --log) tail -${2:-50} "$MODDIR/cleaner.log" 2>/dev/null || echo "(无日志)";;
+  --log-stats)
+    echo "📊 日志统计"
+    cnt=$(grep -c "DONE|" "$MODDIR/cleaner.log" 2>/dev/null || echo 0)
+    freed=$(grep -o "freed_kb=[0-9]*" "$MODDIR/cleaner.log" 2>/dev/null | grep -o "[0-9]*" | awk "{s+=\$1} END{print s+0}")
+    echo "  清理次数: ${cnt:-0}"
+    echo "  累计释放: $((freed/1024)) MB"
+    echo "  日志大小: $(du -h "$MODDIR/cleaner.log" 2>/dev/null | cut -f1)"
+    ;;
+  --mem)
+    echo "🧠 内存占用 (v2-a8)"
+    dp=$(cat "$MODDIR/.daemon_pid" 2>/dev/null); case "$dp" in *[!0-9]*) dp=0;; esac
+    if [ "$dp" -gt 0 ] 2>/dev/null && [ -d "/proc/$dp" ]; then
+      rss=$(awk '/VmRSS/{print $2}' /proc/$dp/status 2>/dev/null); echo "  守护进程: ${rss:-0} KB (PID $dp)"
+    else echo "  守护进程: 未运行"; fi
+    for p in /proc/[0-9]*; do
+      cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)
+      case "$cmd" in *"httpd -p 127.0.0.1:8899"*) rss=$(awk '/VmRSS/{print $2}' "$p/status" 2>/dev/null); echo "  httpd: ${rss:-0} KB (PID ${p#/proc/})";; esac
+    done
+    free -k 2>/dev/null | awk '/Mem:/{printf "  系统内存: 已用 %dMB / 共 %dMB (空闲 %dMB)\n", ($2-$4)/1024, $2/1024, $4/1024}'
+    ;;
+  --config) cat "$MODDIR/config" 2>/dev/null || echo "(无配置)";;
+  --schedule)
+    echo "⏰ 定时设置"
+    t=$(grep "^CLEAN_TIME=" "$MODDIR/config" 2>/dev/null | cut -d= -f2)
+    h=$(grep "^CLEAN_HOURS=" "$MODDIR/config" 2>/dev/null | cut -d= -f2)
+    if [ -n "$t" ]; then echo "  每日定时: $t"
+    else echo "  每日定时: 未设置 (间隔 ${h:-24} 小时)"; fi
+    ;;
+  --restart)
+    for p in /proc/[0-9]*; do
+      [ "${p#/proc/}" = "$$" ] && continue
+      [ "${p#/proc/}" = "$PPID" ] && continue
+      case "${p#/proc/}" in *[!0-9]*) continue;; esac
+      cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)
+      case "$cmd" in *"/system_junk_cleaner/daily.sh"*) kill -9 "${p#/proc/}" 2>/dev/null;; esac
+    done
+    echo "🔄 重启定时守护..."
+    nohup sh "$MODDIR/daily.sh" >/dev/null 2>&1 &
+    echo "✅ 已重启 (每日/定时清理守护)"
+    ;;
+  --web) echo "http://127.0.0.1:8899"
+    ss -ltn 2>/dev/null | grep -q 8899 && echo "✅ 运行中" || echo "❌ 未运行";;
+  --fix)
+    chmod 755 "$MODDIR/web/cgi-bin/"*.cgi "$MODDIR"/*.sh 2>/dev/null
+    # 自动检测 busybox
+    BUSYBOX=""
+    for b in /data/adb/ap/bin/busybox /data/adb/magisk/busybox /system/bin/busybox /system/xbin/busybox; do
+      [ -x "$b" ] && { BUSYBOX="$b"; break; }
+    done
+    [ -z "$BUSYBOX" ] && BUSYBOX=$(command -v busybox 2>/dev/null)
+    for p in /proc/[0-9]*; do
+      [ "${p#/proc/}" = "$$" ] && continue
+      [ "${p#/proc/}" = "$PPID" ] && continue
+      case "${p#/proc/}" in *[!0-9]*) continue;; esac
+      cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)
+      case "$cmd" in *"httpd -p 127.0.0.1:8899"*) kill -9 "${p#/proc/}" 2>/dev/null;; esac
+    done
+    sleep 1
+    [ -n "$BUSYBOX" ] && "$BUSYBOX" httpd -p 127.0.0.1:8899 -h "$MODDIR/web" >/dev/null 2>&1 &
+    echo "✅ 已修复";;
+  *) echo "🧹 清理中..."; sh "$MODDIR/cleanup.sh";;
+esac

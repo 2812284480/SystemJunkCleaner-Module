@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#080812">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>System Cleaner</title>
+  <link rel="stylesheet" href="style.css?v=167">
+  <script>if(localStorage.getItem("sc_theme")==="light"){document.documentElement.setAttribute("data-theme","light");}</script>
+</head>
+<body>
+<div class="glow">
+</div>
+<div id="stars"></div>
+<div class="wrap">
+  <div class="head">
+    <button class="theme-btn" style="right:108px;font-size:15px" id="perfBtn" onclick="togglePerf()">⚡</button><button class="theme-btn" onclick="toggleTheme()" id="thBtn">🌙</button><button class="theme-btn" style="right:16px" id="animBtn" onclick="toggleAnim()">✨</button>
+    <div class="logo" id="logo"><div class="logo-inner"><div class="logo-face logo-front"><svg viewBox="0 0 48 48" class="logo-svg" width="30" height="30" fill="none" aria-hidden="true"><defs><linearGradient id="lgH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--g1)"/><stop offset="1" stop-color="var(--g2)"/></linearGradient><linearGradient id="lgL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2a0"/><stop offset="1" stop-color="#8fae33"/></linearGradient></defs><rect x="20.5" y="4" width="7" height="27" rx="3.5" fill="url(#lgH)"/><path d="M24 30 L7 47 L11 48 L25 33 Z" fill="url(#lgL)"/><path d="M11 46 L9 48 L15 42 L13 47 L18 39 Z" fill="#6d8626" opacity=".75"/><path d="M35 8 l1.7 4.2 4.2 1.7 -4.2 1.7 -1.7 4.2 -1.7 -4.2 -4.2 -1.7 4.2 -1.7 Z" fill="var(--lime1)"/><circle cx="40" cy="21" r="1.7" fill="var(--lime1)" opacity=".8"/><circle cx="6" cy="12" r="1.3" fill="var(--lime1)" opacity=".7"/></svg></div><div class="logo-face logo-back"><b id="logoVer">v1.0-b3</b><small>VERSION</small></div></div></div>
+    <h1 id="title"><span class="ch">S</span><span class="ch">y</span><span class="ch">s</span><span class="ch">t</span><span class="ch">e</span><span class="ch">m</span><span class="ch"> </span><span class="ch">C</span><span class="ch">l</span><span class="ch">e</span><span class="ch">a</span><span class="ch">n</span><span class="ch">e</span><span class="ch">r</span></h1>
+    <div class="st">一键清理 · 🍋 清新如初</div>
+  </div>
+  <div class="stats">
+    <div class="b"><div class="v" id="lastClean">-</div><div class="l">上次清理</div></div>
+    <div class="b"><div class="v" id="totalFreed">-</div><div class="l">累计释放</div></div>
+
+    <div class="b"><div class="traffic"><div class="tl light-red" id="tlRed"></div><div class="tl light-green" id="tlGreen"></div></div><div class="l" id="lockLbl">状态</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab tab-clean active" data-p="clean">⚡ 清理</div>
+    <div class="tab tab-stats" data-p="stats">📊 统计</div>
+    <div class="tab tab-white" data-p="whitelist">📋 白名单</div>
+    <div class="tab tab-config" data-p="config">⚙️ 配置</div>
+    <div class="tab tab-log" data-p="log">📜 日志</div>
+  </div>
+
+  <div class="page on" id="p-clean">
+    <div class="card">
+      <div class="mode-wrap">
+        <div class="mode-btn test" onclick="selectMode(1)"><span class="icon">🔍</span><span class="label">试运行</span><span class="desc">只扫描不删除</span></div>
+        <div class="mode-btn clean" onclick="selectMode(0)"><span class="icon">🗑️</span><span class="label">⚡ 极速清理</span><span class="desc">执行实际删除</span></div>
+      </div>
+      <button class="btn-go" id="goBtn" onclick="run()"><span class="go-text-wrap"><span class="go-text go-old" id="goOld">⚡ 开始清理</span><span class="go-text go-new" id="goNew">⚡ 开始清理</span></span></button>
+      <div class="clean-anim-wrap" id="cleanAnimWrap"><div class="clean-anim" id="cleanAnim"><div class="ca-ring"><div class="ca-core"></div></div><div class="ca-text" id="caText">🧹 正在清扫垃圾…</div></div></div>
+      <div class="mode-hint" id="modeHint">请选择清理模式</div><div class="est-box" id="estBox"><span id="estTxt"></span></div>
+      <div class="res" id="res"></div>
+
+    </div>
+  </div>
+
+  <div class="page" id="p-stats">
+    <div class="card">
+      <div class="card-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:14px">📊 清理统计</div>
+      <div id="dayList" style="margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:14px">💾 存储清爽度</div>
+      <div class="storage-wrap">
+        <div class="water-tank" id="waterTank"><canvas id="waterCanvas" width="104" height="104"></canvas><div class="ring-center3"><div class="sv" id="stPct">--</div><div class="st">清爽度</div></div></div>
+        <div class="storage-info">
+          <div class="si"><span>已用</span><b class="lime-num" id="stUsed">-</b></div>
+          <div class="si"><span>可用</span><b class="lime-num" id="stFree">-</b></div>
+          <div class="si"><span>总容量</span><b class="lime-g" id="stTotal">-</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:12px">🩺 模块状态</div>
+      <div class="mstat">
+        <div class="msi"><span>版本</span><b class="lime-g" id="msVer">-</b></div>
+        <div class="msi"><span>守护进程</span><b id="msDaemon">-</b></div>
+        <div class="msi"><span>Web 服务</span><b id="msWeb">-</b></div>
+        <div class="msi"><span>端口</span><b id="msPort">8899</b></div>
+        <div class="msi"><span>上次清理</span><b id="msLast">-</b></div>
+        <div class="msi"><span>下次清理</span><b id="msNext">-</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="p-whitelist">
+    <div class="card">
+      <div class="card-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px">📋 清理白名单（开启=保护，不清理）</div>
+      <div id="wlList"></div>
+      <div class="btnrow" style="margin-top:12px;display:flex;gap:8px">
+        <button class="sm" style="flex:1;padding:10px;font-size:12px;background:var(--card2);color:var(--t)" onclick="wlAll(1)">✅ 全选</button><button class="sm" style="flex:1;padding:10px;font-size:12px;background:var(--card2);color:var(--t)" onclick="wlAll(0)">⬜ 全不选</button><button class="sm no-tick" style="flex:1;padding:10px;font-size:12px;background:linear-gradient(135deg,var(--lime1),var(--lime2));color:#1e293b;font-weight:700" onclick="saveWhitelist()">💾 保存</button>
+      </div>
+      <div id="wlMsg" style="font-size:11px;color:var(--ok);margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div class="page" id="p-config">
+    <div class="card">
+      <div class="doc-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px">⏰ 定时清理</div>
+      <div class="clock-box" id="clockBox">
+        <svg id="clockFace" viewBox="0 0 240 240">
+          <defs><radialGradient id="cg"><stop offset="0%" stop-color="var(--card2)"/><stop offset="100%" stop-color="var(--card)"/></radialGradient><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--lime1)"/><stop offset="100%" stop-color="var(--lime2)"/></linearGradient></defs>
+          <circle cx="120" cy="120" r="92" fill="none" stroke="url(#cg)" stroke-width="46"/>
+          <circle cx="120" cy="120" r="108" fill="none" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2,4"/>
+        </svg>
+        <div class="clock-center"><div class="clock-time" id="clockTime">--:--</div><div class="clock-sub">每日定时</div></div>
+      </div>
+      <div class="clock-hint">拖动内圈时针选小时 · 外圈分针选分钟</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--t2)">间隔</span>
+        <select id="ctHours" style="background:var(--card2);color:var(--t);border:1px solid var(--border);border-radius:8px;padding:5px;font-size:12px">
+          <option value="6">6小时</option><option value="12">12小时</option><option value="24" selected>24小时</option><option value="48">48小时</option>
+        </select>
+        <button class="sm no-tick" style="background:linear-gradient(135deg,var(--lime1),var(--lime2));color:#1e293b;font-weight:700" onclick="saveSchedule()">💾 保存</button>
+        <button class="sm no-tick" onclick="clearSchedule()">🗑️ 清除</button>
+      </div>
+      <div style="font-size:10px;color:var(--t2);margin-top:6px;text-align:center">设了钟表则每日按点执行；清除则按间隔（默认24小时）</div>
+      <div id="nextClean" style="font-size:10px;color:var(--lime1);margin-top:4px;text-align:center">下次清理: --</div>
+    </div>
+    <div class="card">
+
+      <textarea class="ta" id="cfg" spellcheck="false"></textarea>
+      <div class="btnrow" style="margin-top:8px;display:flex;gap:8px">
+        <button class="sm" style="flex:1;padding:10px;font-size:12px;background:var(--card2);color:var(--t)" onclick="loadCfg()">🔄 刷新</button>
+        <button class="sm" style="flex:1;padding:10px;font-size:12px;background:var(--card2);color:var(--t)" onclick="backupCfg()" title="下载配置备份">📤 备份</button>
+        <button class="sm" style="flex:1;padding:10px;font-size:12px;background:var(--card2);color:var(--t)" onclick="restoreCfg()" title="从备份恢复配置">📥 恢复</button>
+        <button class="sm no-tick" style="flex:1;padding:10px;font-size:12px;background:linear-gradient(135deg,var(--lime1),var(--lime2));color:#1e293b;font-weight:700" onclick="saveCfg()">💾 保存</button>
+      </div>
+      <div id="cfgMsg" style="font-size:11px;color:var(--ok);margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div class="page" id="p-log">
+    <div class="card">
+      <div class="tools">
+        <span>🧹 <b id="logN">-</b>次</span>
+        <span>♻️ <b id="logF">-</b></span>
+        <span>📄 <b id="logS">-</b></span>
+        <span>⚠️ <b id="logW" style="color:var(--warn)">-</b></span>
+        <span>🛑 <b id="logE" style="color:var(--err)">-</b></span>
+        <span style="flex:1"></span>
+        <select id="ln" onchange="loadLog()">
+          <option value="20">20行</option><option value="50" selected>50行</option><option value="100">100行</option>
+        </select>
+        <button class="sm" onclick="loadLog()">🔄</button>
+        <button class="sm no-tick" onclick="clearLog()">🗑️</button>
+        <button class="sm" onclick="copyLog()" title="复制日志">📋</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <select id="ltype" onchange="loadLog()" style="background:var(--card2);color:var(--t);border:1px solid var(--border);border-radius:8px;padding:5px;font-size:12px">
+          <option value="">全部类型</option>
+          <option value="START">▶ 开始</option>
+          <option value="CTX">ℹ️ 上下文</option>
+          <option value="STORAGE">💾 存储</option>
+          <option value="PHASE">⏱ 阶段</option>
+          <option value="DEEP">🔍 深扫</option>
+          <option value="SCAN">🔎 扫描</option>
+          <option value="CLEAN">🧹 清理</option>
+          <option value="SKIP">⏭ 跳过</option>
+          <option value="DONE">✅ 完成</option>
+          <option value="WARN">⚠️ 警告</option>
+          <option value="ERR">🛑 错误</option>
+        </select>
+        <input id="lq" placeholder="搜索关键字…" onkeydown="if(event.key==='Enter')loadLog()" style="flex:1;min-width:120px;background:var(--card2);color:var(--t);border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px">
+        <button class="sm" onclick="loadLog()">🔍</button>
+        <button class="sm" style="background:linear-gradient(135deg,var(--lime1),var(--lime2));color:#1e293b;font-weight:700" onclick="exportDiag()">📦 导出</button>
+      </div>
+      <div class="log" id="logView">加载中...</div>
+    </div>
+  </div>
+
+<div class="page" id="p-perf">
+    <div class="card">
+      <div class="card-title" style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:14px">🍋 性能对比图</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:12px;line-height:1.6">实测: OPPO PKR110 · Android 16 · 8 核 · 10.8GB RAM · v2-a9</div>
+      <div id="perfLive" style="font-size:11px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.8;color:var(--t2)">正在读取实时状态...</div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">① 清理能力（v2-a9）</div>
+      <div class="pf-bar"><span class="pf-l">清理耗时(200项)</span><div class="pf-t"><div class="pf-f" style="width:6%;background:linear-gradient(90deg,var(--lime1),var(--lime2))"></div></div><span class="pf-v">1s（批量删除 0.03s）</span></div>
+      <div class="pf-bar"><span class="pf-l">冷扫描重建</span><div class="pf-t"><div class="pf-f" style="width:18%;background:var(--g2)"></div></div><span class="pf-v">3s（user_0/user_de_0 并行）</span></div>
+      <div class="pf-bar"><span class="pf-l">扫描组</span><div class="pf-t"><div class="pf-f" style="width:19%;background:var(--g2)"></div></div><span class="pf-v">5→3（sc/deep/sp 合并）</span></div>
+      <div class="pf-bar"><span class="pf-l">深扫缓存 du</span><div class="pf-t"><div class="pf-f" style="width:13%;background:var(--g2)"></div></div><span class="pf-v">2 组并行</span></div>
+      <div class="pf-bar"><span class="pf-l">单次清理项</span><div class="pf-t"><div class="pf-f" style="width:15%;background:var(--g2)"></div></div><span class="pf-v">25 → 211+</span></div>
+      <div class="pf-bar"><span class="pf-l">单次释放</span><div class="pf-t"><div class="pf-f" style="width:4%;background:var(--g2)"></div></div><span class="pf-v">182KB → 20GB</span></div>
+      <div class="pf-bar"><span class="pf-l">模块体积</span><div class="pf-t"><div class="pf-f" style="width:6%;background:var(--g2)"></div></div><span class="pf-v">42.4 → 45.8KB</span></div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">② 算法优化（v2-a4~a9）</div>
+      <div class="pf-bar"><span class="pf-l">批量删除</span><div class="pf-t"><div class="pf-f" style="width:1%;background:var(--lime1)"></div></div><span class="pf-v">find -depth -delete（200 根 0.03s）</span></div>
+      <div class="pf-bar"><span class="pf-l">统一收集</span><div class="pf-t"><div class="pf-f" style="width:1%;background:var(--lime1)"></div></div><span class="pf-v">5 次 find → 1 次</span></div>
+      <div class="pf-bar"><span class="pf-l">残留定位</span><div class="pf-t"><div class="pf-f" style="width:2%;background:var(--lime1)"></div></div><span class="pf-v">免逐目录 ls（case 匹配）</span></div>
+      <div class="pf-bar"><span class="pf-l">深扫修复</span><div class="pf-t"><div class="pf-f" style="width:2%;background:var(--lime1)"></div></div><span class="pf-v">awk 转义 + 空格路径</span></div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">③ CPU 占用（线性 0~10%）</div>
+      <div class="pf-bar"><span class="pf-l">后台守护</span><div class="pf-t"><div class="pf-f" style="width:0.04%;background:var(--lime1)"></div></div><span class="pf-v">≈0.004%</span></div>
+      <div class="pf-bar"><span class="pf-l">Web 空闲</span><div class="pf-t"><div class="pf-f" style="width:0.02%;background:var(--lime1)"></div></div><span class="pf-v">≈0%</span></div>
+      <div class="pf-bar"><span class="pf-l">清理执行(短时)</span><div class="pf-t"><div class="pf-f" style="width:2%;background:var(--warn)"></div></div><span class="pf-v">≈1s/次</span></div>
+      <div class="pf-bar"><span class="pf-l">页面动画开</span><div class="pf-t"><div class="pf-f" style="width:80%;background:var(--err)"></div></div><span class="pf-v">≈8%</span></div>
+      <div class="pf-bar"><span class="pf-l">页面 no-anim</span><div class="pf-t"><div class="pf-f" style="width:1%;background:var(--g2)"></div></div><span class="pf-v">≈0.1%</span></div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">④ 响应速度（v2-a9）</div>
+      <div class="pf-bar"><span class="pf-l">状态接口 status</span><div class="pf-t"><div class="pf-f" style="width:1%;background:var(--lime1)"></div></div><span class="pf-v">≈30ms（无 can_free du）</span></div>
+      <div class="pf-bar"><span class="pf-l">清理接口 clean</span><div class="pf-t"><div class="pf-f" style="width:10%;background:var(--lime1)"></div></div><span class="pf-v">1s（200 项）</span></div>
+      <div class="pf-bar"><span class="pf-l">批量删除</span><div class="pf-t"><div class="pf-f" style="width:0.3%;background:var(--lime1)"></div></div><span class="pf-v">0.03s（tr + find -delete）</span></div>
+      <div style="font-size:9px;color:var(--t2);opacity:.6;margin-top:4px">优化历程: 345次fork→1次du · 200次find→1次find · 逐目录ls→case匹配 · 轮询5s→10s · 前端缓存3→1请求</div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">⑤ 物理内存 RSS</div>
+      <div class="pf-bar"><span class="pf-l">守护</span><div class="pf-t"><div class="pf-f" style="width:68%;background:var(--lime1)"></div></div><span class="pf-v">3.4 MB</span></div>
+      <div class="pf-bar"><span class="pf-l">httpd</span><div class="pf-t"><div class="pf-f" style="width:12%;background:var(--lime1)"></div></div><span class="pf-v">0.6 MB</span></div>
+      <div class="pf-bar"><span class="pf-l">合计</span><div class="pf-t"><div class="pf-f" style="width:80%;background:var(--g2)"></div></div><span class="pf-v">≈4.0 MB</span></div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--lime1);margin:16px 0 6px">⑥ 汇总</div>
+      <table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr><th style="text-align:left;color:var(--t2);padding:5px 4px;border-bottom:1px solid var(--border)">场景</th><th style="text-align:left;color:var(--t2);padding:5px 4px;border-bottom:1px solid var(--border)">CPU</th><th style="text-align:left;color:var(--t2);padding:5px 4px;border-bottom:1px solid var(--border)">内存</th><th style="text-align:left;color:var(--t2);padding:5px 4px;border-bottom:1px solid var(--border)">电池</th></tr>
+        <tr><td style="padding:5px 4px;border-bottom:1px solid var(--border)">后台常驻</td><td style="padding:5px 4px;border-bottom:1px solid var(--border);color:var(--lime1)">≈0.004%</td><td style="padding:5px 4px;border-bottom:1px solid var(--border);color:var(--lime1)">4.0MB</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">🟢 可忽略</td></tr>
+        <tr><td style="padding:5px 4px;border-bottom:1px solid var(--border)">深度清理</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">1s/211项</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">—</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">🟢 可忽略</td></tr>
+        <tr><td style="padding:5px 4px;border-bottom:1px solid var(--border)">页面动画开</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">≈8%</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">浏览器</td><td style="padding:5px 4px;border-bottom:1px solid var(--border)">🟡 有影响</td></tr>
+        <tr><td style="padding:5px 4px">页面 no-anim</td><td style="padding:5px 4px;color:var(--lime1)">≈0.1%</td><td style="padding:5px 4px">浏览器</td><td style="padding:5px 4px">🟢 极低</td></tr>
+      </table>
+      <div style="font-size:10px;color:var(--t2);margin-top:10px">💡 关标签页或点 ✨ 切 no-anim 即可将前台功耗也降至≈0。</div>
+    </div>
+  </div>  <div class="ft"><span class="ft-lime">🍋 清新 · 洁净 · 常驻守护</span></div>
+</div>
+<div class="toast" id="toast"></div>
+  <script src="app.js?v=166"></script>
+</body>
+</html>

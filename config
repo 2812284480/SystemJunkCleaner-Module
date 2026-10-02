@@ -1,0 +1,14 @@
+# System Junk Cleaner 配置
+# EXCLUDE_DIR= 排除目录 (不清理)
+# ADD_DIR= 添加目录 (额外清理)
+# APP_CACHE_CLEAN= 系统级应用缓存清理 (1=开[默认], 0=关; 用pm清除模块无法直接访问的缓存)
+# NOTIFY_TITLE= 清理完成通知标题 (自定义)
+CLEAN_TIME=00:00
+CLEAN_HOURS=24
+# RES_PROTECT= 资源保护 (1=开[默认]: 不清理删后需重新下载的资源缓存; 0=关: 允许清理)
+RES_PROTECT=1
+# GAME_PROTECT= 游戏保护 (1=开[默认]: 不清理游戏应用cache目录+游戏资源目录; 0=关: 恢复清理)
+GAME_PROTECT=1
+# MAX_FILE_KB= 大文件保护 (KB, 默认10240=10MB; 超过此大小的文件不被清理, 防误删资源; 0=不限)
+MAX_FILE_KB=10240
+# GAME_LIST= 自定义游戏名单 (可多行, 每行一个包名模式[字母数字._*]; 追加到预置保护名单; 例: GAME_LIST=com.your.game)
