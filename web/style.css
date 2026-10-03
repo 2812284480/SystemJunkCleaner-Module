@@ -392,4 +392,12 @@ body.no-anim .stats .b:hover,body.no-anim .mode-btn:hover,body.no-anim .mode-btn
 .m-head::after{content:"";position:absolute;left:0;top:0;width:160px;height:1.5px;rotate:-45deg;transform-origin:left center;background:linear-gradient(to right,#fff,rgba(200,214,255,.55) 50%,transparent);box-shadow:0 0 8px 3px rgba(215,225,255,.6);opacity:1}
 @keyframes meteorFly{0%{transform:translate(0,0);opacity:0}1%{opacity:1}15%{transform:translate(calc(-.707 * var(--dist,150vw)),calc(.707 * var(--dist,150vw)));opacity:1}19%{opacity:0}100%{transform:translate(calc(-.707 * var(--dist,150vw)),calc(.707 * var(--dist,150vw)));opacity:0}}
 body.no-anim .meteor,body.stars-off .meteor{display:none}
+/* P5 切后台停: 暂停所有 CSS 动画 */
+body.idle *{animation-play-state:paused!important}
+/* P4 无障碍: 系统减弱动态 → 关所有动画/隐藏星空 */
+@media (prefers-reduced-motion:reduce){
+  .star,.m-head,.m-head::after,.fburst,.wbub,.logo-inner{animation:none!important}
+  #stars,.meteor{display:none!important}
+  *{transition-duration:0s!important}
+}
 

@@ -236,7 +236,12 @@ async function run(){
   var dry=(curMode===1);setTraffic(true);
   if(dry){document.body.classList.add("scan-wait");}else{if(window.__starEscape)__starEscape();}
   try{
-    var d=await(await fetch(tk("/cgi-bin/clean.cgi?dry="+(dry?"1":"0")))).json();
+    var resp=await fetch(tk("/cgi-bin/clean.cgi?dry="+(dry?"1":"0")));
+    var _txt=await resp.text();
+    var d;
+    try{d=JSON.parse(_txt);}catch(_pe){d=null;}
+    if(!resp.ok)throw new Error("HTTP "+resp.status);
+    if(!d)throw new Error("响应无法解析");
     var ok=d&&d.ok!==false;
     if(ok){
       if(window.__starReturn)__starReturn();
@@ -272,7 +277,7 @@ async function run(){
       }
     }else{setGoText("❌ 失败");if(window.__starReset)__starReset();err();tt("清理返回异常");}
     setTraffic(false);ov();loadLog();
-  }catch(e){setGoText("❌ 失败");if(window.__starReset)__starReset();err();tt("失败: "+(e.message||""));}
+  }catch(e){setGoText("❌ 失败");if(window.__starReset)__starReset();err();var _m=(e&&e.message)||"";if(/parse|JSON|control character|HTTP\s/i.test(_m))_m="后端响应异常";tt("失败: "+(_m||"网络错误"));}
   finally{document.body.classList.remove("scan-wait");go.disabled=false;setTraffic(false);if(mw)mw.style.display="flex";if(go)go.style.display="block";if(ca)ca.classList.remove("show");if(caw)caw.classList.remove("show");if(card)card.classList.remove("cleaning");setTimeout(function(){setGoText("▶ 开始执行")},1200)}
 }
 /* 清理历史图表 */
@@ -907,7 +912,7 @@ function backPerf(){
 (function(){
   var tank=document.getElementById("waterTank");
   if(!tank)return;
-  var MAX=40,bubbles=[],running=false,H=104;
+  var MAX=40,bubbles=[],running=false,H=104,rafId=null,spawnId=null;
   function spawn(){
     if(bubbles.length>=MAX||document.body.classList.contains("no-anim"))return;
     var b=document.createElement("span");
@@ -935,11 +940,13 @@ function backPerf(){
       d.el.style.transform="scale("+s.toFixed(3)+")";
       d.el.style.opacity=Math.min(.7,t*8)*(1-t*0.8);
     }
-    if(running)requestAnimationFrame(tick);
+    if(running)rafId=requestAnimationFrame(tick);
   }
   for(var i=0;i<12;i++)setTimeout(spawn,i*15);
-  setInterval(spawn,80);
+  spawnId=setInterval(spawn,80);
   running=true;tick();
+  window.__bubblePause=function(){ if(!running)return; running=false; clearInterval(spawnId); if(rafId){cancelAnimationFrame(rafId);rafId=null;} bubbles.forEach(function(d){d.el.remove();}); bubbles=[]; };
+  window.__bubbleResume=function(){ if(running)return; running=true; spawnId=setInterval(spawn,80); tick(); };
 })();
 
 /* 水汽粒子: 超大模糊淡白团, 极慢上浮 (v111) */
@@ -971,6 +978,58 @@ function backPerf(){
   for(var i=0;i<3;i++)setTimeout(function(){spawn();},i*1000);
   setInterval(spawn,4000);
   tick();
+})();
+
+/* P5 切后台/闲置停动画 + P4 prefers-reduced-motion */
+(function(){
+  var IDLE_MS=20000,MOVE_GAP=300;
+  var prm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)');
+  var isPrm=prm&&prm.matches;
+  var timer=null,lastMove=0;
+  function enterIdle(){
+    clearTimeout(timer);
+    document.body.classList.add('idle');
+    if(window.__waterPause)window.__waterPause();
+    if(window.__bubblePause)window.__bubblePause();
+  }
+  function exitIdle(){
+    if(isPrm)return;
+    if(!document.body.classList.contains('idle'))return;
+    document.body.classList.remove('idle');
+    if(window.__bubbleResume)window.__bubbleResume();
+    var st=document.getElementById('p-stats');
+    if(st&&st.classList.contains('on')&&window.__waterResume)window.__waterResume();
+  }
+  function active(){
+    if(document.hidden||isPrm)return;
+    exitIdle();
+    clearTimeout(timer);
+    timer=setTimeout(enterIdle,IDLE_MS);
+  }
+  function onMove(){
+    var t=Date.now();
+    if(t-lastMove<MOVE_GAP)return;
+    lastMove=t;active();
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden)enterIdle();else active();
+  });
+  document.addEventListener('pointerdown',active,{passive:true});
+  document.addEventListener('touchstart',active,{passive:true});
+  document.addEventListener('keydown',active);
+  document.addEventListener('scroll',active,{passive:true,capture:true});
+  document.addEventListener('wheel',active,{passive:true});
+  document.addEventListener('mousemove',onMove,{passive:true});
+  // 初始页面状态: 非 stats 页时水面 canvas 不跑
+  var _st0=document.getElementById('p-stats');
+  if(!(_st0&&_st0.classList.contains('on')))window.__waterPause&&window.__waterPause();
+  if(isPrm){document.body.classList.add('prm');enterIdle();}
+  else active();
+  if(prm&&prm.addEventListener)prm.addEventListener('change',function(e){
+    isPrm=e.matches;
+    document.body.classList.toggle('prm',isPrm);
+    if(isPrm)enterIdle();else{exitIdle();active();}
+  });
 })();
 
 

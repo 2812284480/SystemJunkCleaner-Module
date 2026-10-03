@@ -84,9 +84,10 @@ if [ -f "$REPORT_FILE" ]; then
       case "$after" in *[!0-9]*) after=0;; esac
       fk=$((before-after)); [ $fk -lt 0 ] && fk=0
     fi
-    esc_path=$(echo "$path" | sed 's/"/\\"/g')
+    esc_path=$(printf '%s' "$path" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\000-\037')
+    esc_type=$(printf '%s' "$type" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\000-\037')
     case "$count" in *[!0-9]*) count=0;; esac
-    echo "{\"type\":\"$type\",\"path\":\"$esc_path\",\"before\":\"$before\",\"after\":\"$after\",\"freed_kb\":$fk,\"items\":$count}"
+    echo "{\"type\":\"$esc_type\",\"path\":\"$esc_path\",\"before\":\"$before\",\"after\":\"$after\",\"freed_kb\":$fk,\"items\":$count}"
   done < "$REPORT_FILE"
 fi
 echo "],\"summary\":\"处理 $items 项，$([ "$dry" = "1" ]&&echo 可释放||echo 已释放) $((freed_total/1024)) MB，耗时${cost}s\"}"
